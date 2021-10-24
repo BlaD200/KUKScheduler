@@ -11,6 +11,7 @@ class Group(Base):
 
     group_id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
+    semester = Column(Integer, nullable=False)
     course = Column(Integer, nullable=False)
     studying_years = Column(String(10), nullable=False)
 

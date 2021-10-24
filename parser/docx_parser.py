@@ -1,11 +1,12 @@
 # Copyright (c) 2021 Vladyslav Synytsyn.
 
 import re
-from dataclasses import dataclass
 
 from docx import Document as CreateDocument
 from docx.document import Document
 from docx.table import Table
+
+from .parser_data import *
 
 
 _teacher_regex = re.compile(
@@ -23,32 +24,7 @@ _year_regex = re.compile(
 )
 
 
-@dataclass
-class LessonGroupClassroom:
-    teacher: str
-    classroom: int
-    group: str = None
-
-
-@dataclass
-class Lesson:
-    lesson_slot: int
-    lesson_slot_duration: str
-
-    subject_name: str
-    lesson_type: str
-    dates: list[str]
-    lesson_group_classrooms: list[LessonGroupClassroom]
-
-
-@dataclass
-class GroupDay:
-    group_name: str
-    day: str
-    lessons: list[Lesson]
-
-
-def extract_edu_program_info(docx: Document):
+def _extract_edu_program_info(docx: Document):
     faculty: str | None = None
     course: str | None = None
     semester: str | None = None
@@ -71,7 +47,27 @@ def extract_edu_program_info(docx: Document):
     return faculty, course, semester, '%d-%d' % (year_start, year_end)
 
 
-def extract_tables_data_from_file(tables: list[Table]) -> list[list[list[str]]]:
+def _extract_subject_group(text: str, group: str = None) -> LessonGroup:
+    teacher_match = re.search(_teacher_regex, text)
+    teacher = teacher_match.group("teacher")
+
+    classroom_match = re.search(_classroom_regex, text)
+    if classroom_match:
+        classroom = int(classroom_match.group("classroom"))
+    else:
+        classroom = None
+
+    return LessonGroup(teacher, classroom, group)
+
+
+def _extract_dates(text: str) -> list[str]:
+    return [
+        x.group('date')  # + (x.group('classroom') if x.group('classroom') else '')
+        for x in re.finditer(_date_regex, text)
+    ]
+
+
+def _extract_tables_data_from_file(tables: list[Table]) -> list[list[list[str]]]:
     data_tables = []
     # table: Table
     for table in tables:
@@ -93,83 +89,83 @@ def extract_tables_data_from_file(tables: list[Table]) -> list[list[list[str]]]:
     return data_tables
 
 
-def extract_group_classroom_teacher(text: str, group: str = None) -> LessonGroupClassroom:
-    teacher_match = re.search(_teacher_regex, text)
-    teacher = teacher_match.group("teacher")
-
-    classroom_match = re.search(_classroom_regex, text)
-    if classroom_match:
-        classroom = int(classroom_match.group("classroom"))
-    else:
-        classroom = None
-
-    return LessonGroupClassroom(teacher, classroom, group)
-
-
-def extract_dates(text: str) -> list[str]:
-    return [
-        x.group('date') + (x.group('classroom') if x.group('classroom') else '')
-        for x in re.finditer(_date_regex, text)
-    ]
-
-
 def parse_timetable():
-    docx = CreateDocument('../test_data/1 курс ж, пр, мв КУК.docx')
-    data_tables = extract_tables_data_from_file(docx.tables)
+    docx = CreateDocument('./test_data/1 курс ж, пр, мв КУК.docx')
+    data_tables = _extract_tables_data_from_file(docx.tables)
 
-    faculty, course, semester, studying_years = extract_edu_program_info(docx)
+    faculty, course, semester, studying_years = _extract_edu_program_info(docx)
+    timetable_file = TimetableFile(faculty, course, studying_years, [])
 
+    week_day_map = {
+        0: 'monday',
+        1: 'tuesday',
+        2: 'wednesday',
+        3: 'thursday',
+        4: 'friday',
+        5: 'saturday',
+        6: 'sunday'
+    }
+
+    groups_map = {}
+    for cell_idx, group_name in enumerate(data_tables[0][0]):
+        if cell_idx < 2:
+            continue
+        group = Group(group_name, [])
+        if group not in timetable_file.groups:
+            timetable_file.groups.append(group)
+            groups_map[cell_idx] = group
+
+    # iterating through timetables for each day
     for i, table in enumerate(data_tables[:]):
         print('День ', i + 1)
         print('-' * (40 * 2 + 10 * 2 + 10))
 
-        day = 'День %d' % (i + 1)
-        group_name = table[0][2]
-        lessons: list[Lesson] = []
-        group_day = GroupDay(day=day, group_name=group_name, lessons=lessons)
+        day = week_day_map[i]
+        day_schedules_map = {}
+        for cell_idx in groups_map:
+            schedule = DaySchedule(day, [])
+            groups_map[cell_idx].day_schedules.append(schedule)
+            day_schedules_map[cell_idx] = schedule
 
+        # row is a list of str in the format
+        # first row: ['Пара', 'Тривалість', <group 1>, ..., <group N>]
+        # other rows: [<lesson_slot>, <slot_duration>, <lesson 1>, ..., <lesson N>]
         for row in table[1:]:
             lesson_slot = int(row[0])
-            lesson_slot_duration = row[1]
+            lesson_slot_duration = re.sub(r'\s', '', row[1])
 
-            for j, cell in enumerate(row[:3]):
-                if j > 2:
-                    #     print('{:^10}'.format(''.join(cell.split('\n')[:3])), end=' | ')
-                    # else:
-                    #     print('{:^40}'.format(' '.join(cell.split('\n')[:3])), end=' | ')
+            for cell_idx, cell in enumerate(row[:]):
+                if cell_idx < 2:
+                    print('{:^11}'.format(''.join(cell.split('\n')[:3])), end=' | ')
+                else:
+                    print('{:^20}'.format(' '.join(cell.split('\n')[:3]))[:20], end=' | ')
                     if cell.strip():
-                        group_classrooms = []
+                        lesson_groups = []
                         group_matchers = list(re.finditer(_group_regex, cell))
                         if group_matchers:
                             for group_match in group_matchers:
                                 group = group_match.group('group')
                                 group_srt = group_match.group()
-                                group_classroom = extract_group_classroom_teacher(group_srt, group)
-                                group_classrooms.append(group_classroom)
+                                lesson_group = _extract_subject_group(group_srt, group)
+                                lesson_groups.append(lesson_group)
                         else:
-                            group_classroom = extract_group_classroom_teacher(cell)
-                            group_classrooms.append(group_classroom)
+                            lesson_group = _extract_subject_group(cell)
+                            lesson_groups.append(lesson_group)
 
                         lines = cell.split('\n')
                         subject_name = lines[0]
                         lesson_type = lines[1].split(',')[0].split()[0]
-                        dates = extract_dates(cell)
+                        dates = _extract_dates(cell)
                         lesson = Lesson(
-                            lesson_slot, lesson_slot_duration,
-                            subject_name, lesson_type, dates,
-                            group_classrooms
+                            subject_name,
+                            lesson_type, lesson_slot, lesson_slot_duration,
+                            dates, lesson_groups
                         )
 
-                        if lesson not in lessons:
-                            lessons.append(lesson)
+                        if lesson not in day_schedules_map[cell_idx].lessons:
+                            day_schedules_map[cell_idx].lessons.append(lesson)
 
             print('\n', '-' * (40 * 2 + 10 * 2 + 10))
-        # print(*[x[:4] for x in table], sep='\n')
-        print()
-
-        print(group_day.group_name, group_day.day)
-        for lesson in group_day.lessons:
-            print(lesson.subject_name, ' | ', lesson.lesson_type, lesson.dates, ' | ', lesson.lesson_group_classrooms)
         print()
 
         # Назва
@@ -179,7 +175,10 @@ def parse_timetable():
         # (Зум)
         # Аудиторія (Optional)
         #
+    return timetable_file
 
 
 if __name__ == '__main__':
-    parse_timetable()
+    timetable = parse_timetable()
+
+# TODO use logging instead of print
