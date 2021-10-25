@@ -13,10 +13,10 @@ class LessonType(enum.Enum):
     practice = 2
 
 
-class Subject(Base):
-    __tablename__ = 'subjects'
+class Lesson(Base):
+    __tablename__ = 'lessons'
 
-    subject_id = Column(Integer, primary_key=True)
+    lesson_id = Column(Integer, primary_key=True)
     subject_name = Column(String(100), nullable=False)
     lesson_type = Column(Enum(LessonType), nullable=False)
     lesson_slot = Column(Integer, nullable=False)
@@ -24,10 +24,10 @@ class Subject(Base):
     lesson_dates = Column(postgresql.ARRAY(Date), nullable=False)
 
     day_schedule_id = Column(ForeignKey('day_schedule.day_schedule_id', onupdate='CASCADE', ondelete='RESTRICT'))
-    day_schedule = relationship('DaySchedule', back_populates='subjects')
+    day_schedule = relationship('DaySchedule', back_populates='lessons')
 
-    subject_groups = relationship(
-        'SubjectGroup',
+    lesson_groups = relationship(
+        'LessonGroup',
         back_populates='subject',
         cascade='all, delete, delete-orphan'
     )

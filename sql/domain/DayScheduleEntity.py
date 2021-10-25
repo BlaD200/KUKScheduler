@@ -25,8 +25,8 @@ class DaySchedule(Base):
 
     group_id = Column(ForeignKey('groups.group_id', onupdate='CASCADE', ondelete='RESTRICT'))
     group = relationship('Group', back_populates='day_schedules')
-    subjects = relationship(
-        'Subject',
+    lessons = relationship(
+        'Lesson',
         back_populates='day_schedule',
         cascade='save-update, merge, expunge, refresh-expire',
         passive_deletes='all'

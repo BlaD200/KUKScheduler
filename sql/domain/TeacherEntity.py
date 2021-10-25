@@ -12,7 +12,7 @@ class Teacher(Base):
     name = Column(String(100), nullable=False, unique=True)
 
     subject_groups = relationship(
-        'SubjectGroup',
+        'LessonGroup',
         back_populates='teacher',
         cascade='save-update, merge, expunge, refresh-expire',
         passive_deletes='all'
