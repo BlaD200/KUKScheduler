@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session, scoped_session, declarative_base, DeclarativeMeta
 from sqlalchemy.schema import Table
 
-from sql.config import *
+from sql.db_config import *
 
 
 sqlalchemy_url = db_url if db_url is not None \

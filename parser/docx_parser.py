@@ -10,9 +10,12 @@ from .parser_data import *
 
 
 _teacher_regex = re.compile(
-    r'(?P<teacher>'
-    r'((([Дд]оц(ент)?\.? ?(з/н)?)|((ст\.)?[Вв]икл)|([Пп]роф)|[А-ЯІЇ][а-яії]{4,}) ?\.? ?'
-    r'([ \w\-.а-яА-ЯіїІЇ])+?\.\10?.))')
+    r'(?P<teacher>('
+    r'(([Дд]оц(ент)?\.? ?(з\/н)?)|((ст\.)? ?[Вв]икл\.?)|([Пп]роф\.?)|[А-ЯІЇ][а-яії]{4,})([. ]?)'
+    r'([\-.а-яА-ЯіїІЇюЮ]+)'
+    r'(\s?[\-.А-ЯІЇЮ]\.?)'
+    r'(\s?[\-.А-ЯІЇЮ]?[. ]?)))'
+)
 _classroom_regex = re.compile(r'ауд.\s?(?P<classroom>\d+)')
 _group_regex = re.compile(r'(?P<group>група\s*\d)(.*)?')
 _date_regex = re.compile(r'(?P<date>\d{1,2}\.\d{1,2})\s?\(?(?P<classroom>\d{3})?')
@@ -57,7 +60,7 @@ def _extract_subject_group(text: str, group: str = None) -> LessonGroup:
     else:
         classroom = None
 
-    return LessonGroup(teacher, classroom, group)
+    return LessonGroup(teacher=teacher, classroom=classroom, group=group)
 
 
 def _extract_dates(text: str) -> list[str]:
@@ -89,12 +92,13 @@ def _extract_tables_data_from_file(tables: list[Table]) -> list[list[list[str]]]
     return data_tables
 
 
-def parse_timetable():
-    docx = CreateDocument('./test_data/1 курс ж, пр, мв КУК.docx')
+def parse_timetable(timetable_docx):
+    # docx = CreateDocument('./test_data/1 курс ж, пр, мв КУК.docx')
+    docx = CreateDocument(timetable_docx)
     data_tables = _extract_tables_data_from_file(docx.tables)
 
     faculty, course, semester, studying_years = _extract_edu_program_info(docx)
-    timetable_file = TimetableFile(faculty, course, studying_years, [])
+    timetable_file = TimetableFile(faculty_name=faculty, course=course, studying_years=studying_years, groups=[])
 
     week_day_map = {
         0: 'monday',
@@ -110,7 +114,7 @@ def parse_timetable():
     for cell_idx, group_name in enumerate(data_tables[0][0]):
         if cell_idx < 2:
             continue
-        group = Group(group_name, [])
+        group = Group(name=group_name, day_schedules=[])
         if group not in timetable_file.groups:
             timetable_file.groups.append(group)
             groups_map[cell_idx] = group
@@ -123,7 +127,7 @@ def parse_timetable():
         day = week_day_map[i]
         day_schedules_map = {}
         for cell_idx in groups_map:
-            schedule = DaySchedule(day, [])
+            schedule = DaySchedule(day_of_week=day, lessons=[])
             groups_map[cell_idx].day_schedules.append(schedule)
             day_schedules_map[cell_idx] = schedule
 
@@ -157,9 +161,9 @@ def parse_timetable():
                         lesson_type = lines[1].split(',')[0].split()[0]
                         dates = _extract_dates(cell)
                         lesson = Lesson(
-                            subject_name,
-                            lesson_type, lesson_slot, lesson_slot_duration,
-                            dates, lesson_groups
+                            subject_name=subject_name,
+                            lesson_type=lesson_type, lesson_slot=lesson_slot, lesson_slot_duration=lesson_slot_duration,
+                            dates=dates, lesson_groups=lesson_groups
                         )
 
                         if lesson not in day_schedules_map[cell_idx].lessons:
