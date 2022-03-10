@@ -28,6 +28,6 @@ class Lesson(Base):
 
     lesson_groups = relationship(
         'LessonGroup',
-        back_populates='subject',
+        back_populates='lesson',
         cascade='all, delete, delete-orphan'
     )

@@ -11,7 +11,7 @@ class Teacher(Base):
     teacher_id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False, unique=True)
 
-    subject_groups = relationship(
+    lesson_groups = relationship(
         'LessonGroup',
         back_populates='teacher',
         cascade='save-update, merge, expunge, refresh-expire',
