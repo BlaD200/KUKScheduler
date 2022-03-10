@@ -14,7 +14,8 @@ Base: DeclarativeMeta = declarative_base()
 
 _engine = None
 _Session = None
-_session = None
+
+current_session: Session
 
 
 def create_session() -> Session:
@@ -25,22 +26,23 @@ def create_session() -> Session:
     Returns:
         Session: session object to performs operations in DB.
     """
-    global _engine, _Session, _session
+    global _engine, _Session
     if _engine is None:
         _engine = create_engine(sqlalchemy_url, future=True)
+        Base.metadata.bind = _engine
         # logger.info('SQLAlchemy engine created')
     if _Session is None:
         _Session = scoped_session(sessionmaker(_engine))
         # logger.info('Scoped session created')
 
-    if _session is None:
-        _session = _Session()
-    else:
-        _session.close()
-        # logger.debug(f'The session was closed before creating a new one: {_session}.')
-        _session = _Session()
+    # if _session is None:
+    #     _session = _Session()
+    # else:
+    #     _session.close()
+    #     # logger.debug(f'The session was closed before creating a new one: {_session}.')
+    #     _session = _Session()
     # logger.debug(f'A new session was created: {_session}.')
-    return _session
+    return _Session
 
 
 def get_tables() -> list[str]:
@@ -76,9 +78,11 @@ def get_database_revision() -> str:
 
 
 __all__ = [
-    'create_session',
+    'current_session',
     'get_tables',
     'get_database_revision',
     'Base',
     'sqlalchemy_url'
 ]
+
+current_session = create_session()

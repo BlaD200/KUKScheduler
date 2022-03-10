@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 from typing import TypeVar, Generic, Callable
 from unittest import TestCase
 
-from sql import Base, create_session
+from sql import Base, current_session
 from sql.repositories import CrudRepository
 
 
@@ -17,10 +17,9 @@ class BaseRepositoryTest(TestCase, Generic[E], metaclass=ABCMeta):
     @staticmethod
     def transactional(method: Callable) -> Callable:
         def wrapper(*args, **kwargs):
-            with create_session() as session:
-                with session.begin():
-                    method(*args, **kwargs, session=session)
-                    session.rollback()
+            with current_session.begin():
+                method(*args, **kwargs, session=current_session)
+                current_session.rollback()
 
         return wrapper
 
