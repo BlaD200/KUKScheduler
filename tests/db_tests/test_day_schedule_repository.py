@@ -2,10 +2,10 @@
 from sql import create_session
 from sql.domain import DaySchedule, WeekDay
 from sql.repositories.day_schedule_repository import DayScheduleRepository
-from tests.db_tests import AbstractTest
+from tests.db_tests.base_repository_test import BaseRepositoryTest
 
 
-class DayScheduleRepositoryTest(AbstractTest.BaseRepositoryTest[DaySchedule]):
+class DayScheduleRepositoryTest(BaseRepositoryTest[DaySchedule]):
 
     # def __init__(self, methodName: str = ...) -> None:
     #     super().__init__(methodName)

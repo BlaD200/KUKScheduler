@@ -3,10 +3,10 @@
 from sql import create_session
 from sql.domain import Faculty
 from sql.repositories.faculty_repository import FacultyRepository
-from tests.db_tests import AbstractTest
+from tests.db_tests.base_repository_test import BaseRepositoryTest
 
 
-class FacultyRepositoryTest(AbstractTest.BaseRepositoryTest[Faculty]):
+class FacultyRepositoryTest(BaseRepositoryTest[Faculty]):
 
     # def __init__(self, methodName: str = ...) -> None:
     #     super().__init__(methodName)
@@ -43,7 +43,7 @@ class FacultyRepositoryTest(AbstractTest.BaseRepositoryTest[Faculty]):
         entity.name = 'new test name'
         return copy
 
-    @AbstractTest.BaseRepositoryTest.transactional
+    @BaseRepositoryTest.transactional
     def test_find_by_name(self, session):
         test_name = 'test faculty'
         self.repository.save(Faculty(name=test_name), session)
