@@ -1,6 +1,6 @@
 #  Copyright (c) 2022 Vladyslav Synytsyn.
 from sql.domain import DaySchedule
-from sql.repositories import CrudRepository
+from sql.repositories.crud_repository import CrudRepository
 
 
 class DayScheduleRepository(CrudRepository):

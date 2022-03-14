@@ -4,7 +4,7 @@ from typing import TypeVar, Generic, Callable
 from unittest import TestCase
 
 from sql import Base, current_session
-from sql.repositories import CrudRepository
+from sql.repositories.crud_repository import CrudRepository
 
 
 E = TypeVar('E', bound=Base)
