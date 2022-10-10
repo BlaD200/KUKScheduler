@@ -3,20 +3,24 @@ from abc import ABCMeta, abstractmethod
 from typing import TypeVar, Generic, Callable
 from unittest import TestCase
 
-from sql import Base, current_session
-from sql.repositories.crud_repository import CrudRepository
+from sql.domain.Base import Base
+from data.connection.connection_handler import ConnectionHandler
+from data.repository.crud_repository import CrudRepository
 
 
-E = TypeVar('E', bound=Base)
+print('INIT base_repository_test')
+
+Entity = TypeVar('Entity', bound=Base)
 
 
-class BaseRepositoryTest(TestCase, Generic[E], metaclass=ABCMeta):
-    repository: CrudRepository[E, int]
+class AbstractRepositoryTest(TestCase, Generic[Entity], metaclass=ABCMeta):
+    repository: CrudRepository[Entity, int]
     test_ids: tuple
 
     @staticmethod
     def transactional(method: Callable) -> Callable:
         def wrapper(*args, **kwargs):
+            current_session = ConnectionHandler().create_new_session()
             with current_session.begin():
                 method(*args, **kwargs, session=current_session)
                 current_session.rollback()
@@ -47,7 +51,7 @@ class BaseRepositoryTest(TestCase, Generic[E], metaclass=ABCMeta):
         self.assertIsNotNone(entity)
 
     @abstractmethod
-    def create_new_entity(self, ent_id: int) -> E:
+    def create_new_entity(self, ent_id: int) -> Entity:
         pass
 
     @transactional
@@ -72,7 +76,7 @@ class BaseRepositoryTest(TestCase, Generic[E], metaclass=ABCMeta):
         self.assertEqual(len(entities), len(new_entities) + len(self.test_ids))
 
     @abstractmethod
-    def modify_entity(self, entity: E) -> E:
+    def modify_entity(self, entity: Entity) -> Entity:
         pass
 
     @transactional
