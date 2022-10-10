@@ -20,13 +20,14 @@ class DBTablesService:
             self._declarative_base = registry().generate_base()
 
     @staticmethod
-    def get_table_names() -> list[str]:
-        """Returns:
+    def get_table_names(schema: str | None = None) -> list[str]:
+        """If the ``schema`` argument is provided, only tables from that schema will be listed
+        Returns:
             List[str]: list of table names existing in database.
         """
         engine = ConnectionHandler().get_engine
         inspector = inspect(engine)
-        tables = inspector.get_table_names()
+        tables = inspector.get_table_names(schema=schema)
         # for column in inspector.get_columns(table_name):
         #     print("Column: %s" % column['name'])
         return tables

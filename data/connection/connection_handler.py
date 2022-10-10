@@ -130,6 +130,7 @@ class ConnectionHandler(metaclass=SingletonMeta):
         session.close()
         return version
 
+    # TODO move to separate class
     def _update_schema(self):
         new_meta = MetaData(schema=self._config.db_schema_name)
         for table in Base.metadata.sorted_tables:
