@@ -1,7 +1,7 @@
 #  Copyright (c) 2022 Vladyslav Synytsyn.
 
 from sql.domain import LessonGroup
-from sql.repositories.crud_repository import CrudRepository
+from data.repository.crud_repository import CrudRepository
 
 
 class LessonGroupRepository(CrudRepository[LessonGroup, int]):

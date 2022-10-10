@@ -4,7 +4,7 @@ import enum
 from sqlalchemy import Column, Integer, Enum, ForeignKey
 from sqlalchemy.orm import relationship
 
-from sql import Base
+from sql.domain.Base import Base
 
 
 class WeekDay(enum.Enum):

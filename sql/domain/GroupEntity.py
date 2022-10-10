@@ -3,7 +3,7 @@
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 
-from sql import Base
+from sql.domain.Base import Base
 
 
 class Group(Base):

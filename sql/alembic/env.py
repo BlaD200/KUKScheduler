@@ -5,12 +5,13 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
+from sqlalchemy import MetaData
 
 
 sys.path.append(os.getcwd())
 print(os.getcwd())
 
-from sql import sqlalchemy_url, Base
+from data.config.db_config import DatabaseConfig
 # DO NOT DELETE THIS LINE as it is needed for alembic to see all table models.
 # noinspection PyUnresolvedReferences
 from sql.domain import *
@@ -34,7 +35,18 @@ target_metadata = Base.metadata
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
-config.set_main_option('sqlalchemy.url', sqlalchemy_url)
+config.set_main_option('sqlalchemy.url', DatabaseConfig().db_url)
+
+
+# TODO move to separate class
+def update_schema(db_schema_name: str):
+    new_meta = MetaData(schema=db_schema_name)
+    for table in Base.metadata.sorted_tables:
+        table.schema = db_schema_name
+        table.to_metadata(new_meta)
+    Base.metadata = new_meta
+    global target_metadata
+    target_metadata = new_meta
 
 
 def run_migrations_offline():
@@ -74,9 +86,19 @@ def run_migrations_online():
         poolclass=pool.NullPool,
     )
 
+    update_schema(DatabaseConfig().db_schema_name)
+
+    print(f"{DatabaseConfig().db_schema_name=}")
+    print(f"{target_metadata.schema=}")
+    print([(table.name, table.schema) for table in target_metadata.sorted_tables])
+
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            version_table_schema=target_metadata.schema,
+            # Alternative: "public", to put version tables in seperate schema
+            include_schemas=True,
         )
 
         with context.begin_transaction():

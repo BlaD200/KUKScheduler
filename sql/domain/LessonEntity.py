@@ -5,7 +5,7 @@ from sqlalchemy import Column, Integer, String, Enum, Date, ForeignKey
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import relationship
 
-from sql import Base
+from sql.domain.Base import Base
 
 
 class LessonType(enum.Enum):

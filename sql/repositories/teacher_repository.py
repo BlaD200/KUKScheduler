@@ -2,7 +2,7 @@
 
 
 from sql.domain import Teacher
-from sql.repositories.crud_repository import CrudRepository
+from data.repository.crud_repository import CrudRepository
 
 
 class TeacherRepository(CrudRepository[Teacher, int]):

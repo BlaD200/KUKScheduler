@@ -3,7 +3,7 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 
-from sql import Base
+from sql.domain.Base import Base
 
 
 class Faculty(Base):

@@ -2,13 +2,13 @@
 from sqlalchemy import Column, Table, ForeignKey, BigInteger
 from sqlalchemy.orm import relationship
 
-from sql import Base
+from sql.domain.Base import Base
 
 
 _association_table = Table(
-    'user_groups', Base.metadata,
+    'user_lessons', Base.metadata,
     Column('user_id', ForeignKey('users.user_id'), primary_key=True),
-    Column('group_id', ForeignKey('groups.group_id'), primary_key=True)
+    Column('lesson_id', ForeignKey('lessons.lesson_id'), primary_key=True)
 )
 
 
@@ -17,8 +17,8 @@ class User(Base):
 
     user_id = Column(BigInteger, primary_key=True, unique=True, autoincrement=False)
 
-    groups = relationship(
-        'Group',
+    lessons = relationship(
+        'Lesson',
         secondary=_association_table,
         backref='users'
     )

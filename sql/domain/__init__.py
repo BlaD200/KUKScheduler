@@ -1,5 +1,6 @@
 #  Copyright (c) 2021 Vladyslav Synytsyn.
 
+from .Base import Base
 from .DayScheduleEntity import DaySchedule, WeekDay
 from .FacultyEntity import Faculty
 from .GroupEntity import Group
